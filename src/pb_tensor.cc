@@ -25,6 +25,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <iostream>
 #include "pb_stub_utils.h"
 #include "pb_tensor.h"
 
@@ -72,6 +73,7 @@ PbTensor::FromDLPack(std::string name, py::capsule dlpack_tensor)
 
   // TODO: Make sure that the tensor is contiguous
   void* memory_ptr = dl_managed_tensor->dl_tensor.data;
+  std::cout << " hi " << memory_ptr << std::endl;
   std::vector<int64_t> dims(
       dl_managed_tensor->dl_tensor.shape,
       dl_managed_tensor->dl_tensor.shape + dl_managed_tensor->dl_tensor.ndim);
@@ -91,14 +93,14 @@ PbTensor::FromDLPack(std::string name, py::capsule dlpack_tensor)
   TRITONSERVER_DataType dtype =
       convert_dlpack_to_triton_type(dl_managed_tensor->dl_tensor.dtype);
 
+  // Calculate tensor size.
   uint64_t size = 1;
   for (auto& dim : dims) {
     size *= dim;
   }
   size *= (dl_managed_tensor->dl_tensor.dtype.bits + 7) / 8;
-  PyCapsule_SetName(dlpack_tensor.ptr(), "used_dlpack");
-  PyCapsule_SetDestructor(dlpack_tensor.ptr(), nullptr);
 
+  PyCapsule_SetName(dlpack_tensor.ptr(), "used_dlpack");
   return std::make_unique<PbTensor>(
       name, dims, static_cast<int>(dtype), memory_type, memory_type_id,
       memory_ptr, size);
@@ -206,6 +208,6 @@ PbTensor::TritonDtype()
 void*
 PbTensor::GetDataPtr()
 {
-  return static_cast<void *>(memory_ptr_);
+  return static_cast<void*>(memory_ptr_);
 }
 }}}  // namespace triton::backend::python

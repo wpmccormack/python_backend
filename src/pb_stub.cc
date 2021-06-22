@@ -143,6 +143,7 @@ class Stub {
   py::object deserialize_bytes_;
   py::object serialize_bytes_;
   ResponseBatch* response_batch_;
+  std::unordered_map<void*, cudaIpcMemHandle_t*> ipc_mem_handles_;
 
  public:
   Stub(
@@ -357,13 +358,22 @@ class Stub {
             output_tensor_pb.ByteSize(), output_name.c_str(),
             output_tensor_pb.Dims().data(), output_tensor_pb.Dims().size(),
             dtype_triton);
-        cudaSetDevice(output_tensor_pb.MemoryTypeId());
-        cudaError_t err = cudaIpcGetMemHandle(
-            reinterpret_cast<cudaIpcMemHandle_t*>(cuda_handle),
-            output_tensor_pb.GetDataPtr());
-        if (err != cudaSuccess) {
-          // return TRITONSERVER_ErrorNew(
-          //     TRITONSERVER_ERROR_INTERNAL, "Failed to open device pointer.");
+
+        std::unordered_map<void*, cudaIpcMemHandle_t*>::const_iterator
+            cuda_ipc_mem_handle =
+                ipc_mem_handles_.find(output_tensor_pb.GetDataPtr());
+        if (cuda_ipc_mem_handle == ipc_mem_handles_.end()) {
+          cudaSetDevice(output_tensor_pb.MemoryTypeId());
+          cudaError_t err = cudaIpcGetMemHandle(
+              reinterpret_cast<cudaIpcMemHandle_t*>(cuda_handle),
+              output_tensor_pb.GetDataPtr());
+          if (err != cudaSuccess) {
+            throw PythonBackendException(
+                std::string(
+                    "failed to get cuda ipc handle: " +
+                    std::string(cudaGetErrorString(err)))
+                    .c_str());
+          }
         }
       }
       j += 1;
@@ -491,11 +501,13 @@ class Stub {
         cudaError_t err = cudaIpcOpenMemHandle(
             (void**)&data, *cuda_mem_handle, cudaIpcMemLazyEnablePeerAccess);
         if (err != cudaSuccess) {
-          throw PythonBackendException(std::string(
-                                           "failed to open cuda ipc handle: " +
-                                           std::string(cudaGetErrorString(err)))
-                                           .c_str());
+          throw PythonBackendException(
+              std::string(
+                  "failed to reopen cuda ipc handle: " +
+                  std::string(cudaGetErrorString(err)))
+                  .c_str());
         }
+        ipc_mem_handles_.insert({static_cast<void*>(data), cuda_mem_handle});
 
         PbTensor py_input_tensor = PbTensor(
             name, shape, static_cast<int>(dtype), raw_data->memory_type,
@@ -637,6 +649,8 @@ class Stub {
       }
       i += 1;
     }
+
+    ipc_mem_handles_.clear();
 
     return 0;
   }

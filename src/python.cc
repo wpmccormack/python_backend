@@ -755,10 +755,13 @@ ModelInstanceState::ProcessRequests(
           shm_pool_->MapOffset(
               (char**)&raw_data, sizeof(RawData), output_tensor->raw_data));
 
-      TRITONSERVER_MemoryType actual_memory_type = raw_data->memory_type;
-      int64_t actual_memory_type_id = raw_data->memory_type_id;
+      TRITONSERVER_MemoryType src_memory_type = raw_data->memory_type;
+      int64_t src_memory_type_id = raw_data->memory_type_id;
 
-      if (actual_memory_type == TRITONSERVER_MEMORY_CPU) {
+      TRITONSERVER_MemoryType actual_memory_type = src_memory_type;
+      int64_t actual_memory_type_id = src_memory_type_id;
+
+      if (src_memory_type == TRITONSERVER_MEMORY_CPU) {
         char* data;
         GUARDED_RESPOND_IF_EXCEPTION(
             responses, r,
@@ -782,10 +785,12 @@ ModelInstanceState::ProcessRequests(
                 response_output, &buffer, raw_data->byte_size,
                 &actual_memory_type, &actual_memory_type_id));
 
+        GUARDED_RESPOND_IF_ERROR(
+            responses, r,
         CopyBuffer(
-            "Failed to copy string", TRITONSERVER_MEMORY_CPU /* memory_type */,
-            0 /* memory_type_id */, actual_memory_type, actual_memory_type_id,
-            raw_data->byte_size, data, buffer, CudaStream(), &cuda_used);
+            "Failed to copy memory type CPU", src_memory_type,
+            src_memory_type_id, actual_memory_type, actual_memory_type_id,
+            raw_data->byte_size, data, buffer, CudaStream(), &cuda_used));
         cuda_copy |= cuda_used;
       } else if (actual_memory_type == TRITONSERVER_MEMORY_GPU) {
         cudaIpcMemHandle_t* cuda_mem_handle;
@@ -822,20 +827,23 @@ ModelInstanceState::ProcessRequests(
             TRITONBACKEND_OutputBuffer(
                 response_output, &buffer, raw_data->byte_size,
                 &actual_memory_type, &actual_memory_type_id));
-        CopyBuffer(
-            "Failed to copy string", actual_memory_type,
-            actual_memory_type_id /* memory_type_id */, actual_memory_type,
-            actual_memory_type_id, raw_data->byte_size, data, buffer,
-            CudaStream(), &cuda_used);
+
+        GUARDED_RESPOND_IF_ERROR(
+            responses, r,
+            CopyBuffer(
+                "Failed to copy memory type GPU", src_memory_type,
+                src_memory_type_id, actual_memory_type, actual_memory_type_id,
+                raw_data->byte_size, data, buffer, CudaStream(), &cuda_used));
 
         cuda_copy |= cuda_used;
-        err = cudaIpcCloseMemHandle(reinterpret_cast<void*>(data));
-        if (err != cudaSuccess) {
-          throw PythonBackendException(std::string(
-                                           "failed to close cuda ipc handle: " +
-                                           std::string(cudaGetErrorString(err)))
-                                           .c_str());
-        }
+        // err = cudaIpcCloseMemHandle(reinterpret_cast<void*>(data));
+        // if (err != cudaSuccess) {
+        //   throw PythonBackendException(std::string(
+        //                                    "failed to close cuda ipc handle:
+        //                                    " +
+        //                                    std::string(cudaGetErrorString(err)))
+        //                                    .c_str());
+        // }
       }
     }
 #ifdef TRITON_ENABLE_GPU
@@ -1290,7 +1298,7 @@ ModelInstanceState::GetInputTensor(
         input_name, nullptr, 0, alloc_perference,
         reinterpret_cast<const char**>(&buffer), &input_byte_size, &memory_type,
         &memory_type_id);
-    
+
     // TODO: Properly handle the deletion of cudaIpcMemHandle
     cudaSetDevice(device_id_);
     cudaError_t err = cudaIpcGetMemHandle(

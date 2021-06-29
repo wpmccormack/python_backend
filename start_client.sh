@@ -1,0 +1,1 @@
+docker run --mount type=bind,source="$(pwd)",target=/python_backend -ti --net host nvcr.io/nvidia/tritonserver:21.06-py3-sdk /bin/bash

@@ -1,0 +1,1 @@
+docker run --gpus all --mount type=bind,source="$(pwd)",target=/python_backend --shm-size=1g --ulimit memlock=-1 -p 8000:8000 -p 8001:8001 -p 8002:8002 --ulimit stack=67108864 -ti spvcnn_tritonserver

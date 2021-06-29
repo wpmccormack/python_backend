@@ -1,6 +1,7 @@
 /build
 /.vscode
 *.so
+model.ckpt 
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
@@ -138,3 +139,5 @@ dmypy.json
 # pytype static type analyzer
 .pytype/
 
+core
+calo_cluster_triton.tar.gz

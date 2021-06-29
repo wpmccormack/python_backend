@@ -3,8 +3,6 @@ ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
 ADD model.ckpt model.ckpt
 RUN apt-get update 
-RUN apt -y install snapd
-RUN 
 RUN apt-get -y install libsparsehash-dev
 RUN apt-get -y install python3-dev
 RUN pip3 install torch

@@ -27,6 +27,8 @@
 import numpy as np
 import sys
 import json
+import logging
+logging.basicConfig(filename='/python_backend/spvcnn.log', level=logging.DEBUG)
 
 # triton_python_backend_utils is available in every Triton Python model. You
 # need to use this module to create inference requests and responses. It also
@@ -57,10 +59,9 @@ class TritonPythonModel:
           * model_version: Model version
           * model_name: Model name
         """
-
+        logging.debug('Entering initialize...')
         # You must parse model_config. JSON string is not parsed here
         self.model_config = model_config = json.loads(args['model_config'])
-
         # Get OUTPUT0 configuration
         output0_config = pb_utils.get_output_config_by_name(
             model_config, "OUTPUT0")
@@ -68,8 +69,8 @@ class TritonPythonModel:
         # Convert Triton types to numpy types
         self.output0_dtype = pb_utils.triton_string_to_numpy(
             output0_config['data_type'])
-
-        self.model = TritonSPVCNN(Path('model.ckpt'))
+        self.model = TritonSPVCNN(Path('/opt/tritonserver/model.ckpt'))
+        logging.debug('loaded model...')
 
     def execute(self, requests):
         """`execute` MUST be implemented in every Python model. `execute`
@@ -92,9 +93,8 @@ class TritonPythonModel:
           A list of pb_utils.InferenceResponse. The length of this list must
           be the same as `requests`
         """
-
+        logging.debug('Entering execute...')
         output0_dtype = self.output0_dtype
-        output1_dtype = self.output1_dtype
 
         responses = []
 
@@ -131,4 +131,5 @@ class TritonPythonModel:
         Implementing `finalize` function is OPTIONAL. This function allows
         the model to perform any necessary clean ups before exit.
         """
+        logging.debug('Entering finalize...')
         print('Cleaning up...')

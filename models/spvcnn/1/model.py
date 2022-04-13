@@ -28,7 +28,7 @@ import numpy as np
 import sys
 import json
 import logging
-logging.basicConfig(filename='/python_backend/spvcnn.log', level=logging.DEBUG)
+logging.basicConfig(filename='/code/python_backend/spvcnn.log', level=logging.DEBUG)
 
 # triton_python_backend_utils is available in every Triton Python model. You
 # need to use this module to create inference requests and responses. It also

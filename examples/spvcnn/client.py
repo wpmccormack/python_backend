@@ -32,7 +32,7 @@ import numpy as np
 from pathlib import Path
 
 model_name = "spvcnn"
-shape = [5]
+shape = [7]
 n = 1
 
 with httpclient.InferenceServerClient("localhost:8000") as client:

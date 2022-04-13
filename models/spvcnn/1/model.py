@@ -35,7 +35,7 @@ logging.basicConfig(filename='/python_backend/spvcnn.log', level=logging.DEBUG)
 # contains some utility functions for extracting information from model_config
 # and converting Triton input/output types to numpy types.
 import triton_python_backend_utils as pb_utils
-from hgcal_dev.triton.spvcnn_triton import TritonSPVCNN
+from core.models.tritonmodel import TritonSPVCNN
 from pathlib import Path
 
 class TritonPythonModel:
@@ -69,7 +69,7 @@ class TritonPythonModel:
         # Convert Triton types to numpy types
         self.output0_dtype = pb_utils.triton_string_to_numpy(
             output0_config['data_type'])
-        self.model = TritonSPVCNN(Path('/opt/tritonserver/model.ckpt'))
+        self.model = TritonSPVCNN('/code/spvnas-dev/configs/hcal_panoptic/spvcnn/objectcondensation.yaml')
         logging.debug('loaded model...')
 
     def execute(self, requests):

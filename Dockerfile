@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/tritonserver:21.06-py3
+FROM nvcr.io/nvidia/tritonserver:21.05-py3
 ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
 ADD . /code
@@ -11,5 +11,5 @@ RUN pip3 install numpy
 RUN pip3 install scipy
 RUN pip3 install scikit-learn
 RUN pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
-RUN FORCE_CUDA=1 pip3 install --upgrade git+https://github.com/mit-han-lab/torchsparse.git@v1.4.0
+RUN FORCE_CUDA=1 TORCH_CUDA_ARCH_LIST=7.5 pip3 install --upgrade git+https://github.com/mit-han-lab/torchsparse.git@v1.4.0
 RUN pip3 install torchpack

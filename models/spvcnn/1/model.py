@@ -69,7 +69,7 @@ class TritonPythonModel:
         # Convert Triton types to numpy types
         self.output0_dtype = pb_utils.triton_string_to_numpy(
             output0_config['data_type'])
-        self.model = TritonSPVCNN('/code/spvnas-dev/configs/hcal_panoptic/spvcnn/objectcondensation.yaml')
+        self.model = TritonSPVCNN('/code/spvcnn_config_Feb6_PFtarget_noPU.yaml', '/code/spvcnn_checkpoint_Feb6_PFtarget_noPU.pt')
         logging.debug('loaded model...')
 
     def execute(self, requests):

@@ -8,6 +8,7 @@ RUN apt-get update && \
 RUN apt-get -y install libsparsehash-dev
 RUN apt-get -y install python3-dev 
 RUN pip3 install numpy
+RUN pip3 install uproot
 RUN pip3 install scipy
 RUN pip3 install scikit-learn
 RUN pip3 install torch==1.12 torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
